@@ -178,17 +178,17 @@ if ! grep 'IPv6_OFF' ${INST_LOG} > /dev/null 2>&1 ;then
 fi
 
 
-## timesyncd
+## systemd-timesyncd
 if ! grep '^TIMESYNCD' ${INST_LOG} > /dev/null 2>&1 ;then
     mv -f /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.conf.ori
     install -m 0644 ${TOP_DIR}/conf/timesyncd/timesyncd.conf /etc/systemd/timesyncd.conf
     systemctl restart systemd-timesyncd.service
     ## log installed tag
     echo 'TIMESYNCD' >> ${INST_LOG}
-#fi
+fi
 
 
-## nscd
+## systemd-resolved
 if ! grep '^RESOLVED' ${INST_LOG} > /dev/null 2>&1 ;then
     sed -r -i 's/^#?Cache=.*/Cache=no-negative/g' /etc/systemd/resolved.conf
     systemctl restart systemd-resolved.service
@@ -197,7 +197,7 @@ if ! grep '^RESOLVED' ${INST_LOG} > /dev/null 2>&1 ;then
 fi
 
 
-## system service
+## system services
 if ! grep '^SYS_SERVICE' ${INST_LOG} > /dev/null 2>&1 ;then
     for SVC_ON in atd.service cron.service dbus.service irqbalance.service networking.service networkd-dispatcher.service ssh.service sshd.service rsyslog.service systemd-resolved.service systemd-timesyncd.service;do
         systemctl enable ${SVC_ON} 2>/dev/null
