@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 ## set hostname
 if ! grep '^SET_HOSTNAME' ${INST_LOG} > /dev/null 2>&1 ;then
     if [ ! -z "${OS_HOSTNAME}" ];then
@@ -8,13 +9,43 @@ if ! grep '^SET_HOSTNAME' ${INST_LOG} > /dev/null 2>&1 ;then
         if [ -n "$(grep "$OLD_HOSTNAME" /etc/hosts)" ]; then
             sed -i "s/${OLD_HOSTNAME}//g" /etc/hosts
         fi
-        sed -i "s/127\.0\.0\.1.*/127.0.0.1    ${OS_HOSTNAME} localhost localhost.localdomain/" /etc/hosts
     fi
     ## log installed tag
     echo 'SET_HOSTNAME' >> ${INST_LOG}
 fi
 
-# do not bell on tab-completion
+
+## remove snapd
+if ! grep '^RM_SNAP' ${INST_LOG} > /dev/null 2>&1 ;then
+    snap remove --purge lxd
+    snap remove --purge core18
+    snap remove --purge snapd
+    apt autoremove --purge -y snapd
+    [ -d ~/snap ] && rm -rf ~/snap
+    [ -d /root/snap ] && rm -rf /root/snap
+    [ -d /snap ] && rm -rf /snap
+    [ -d /var/snap ] && rm -rf /var/snap
+    [ -d /var/lib/snapd ] && rm -rf /var/lib/snapd
+    NEED_REBOOT=1
+    ## log installed tag
+    echo 'RM_SNAP' >> ${INST_LOG}
+fi
+
+
+## remove cloud-init
+if ! grep '^RM_CLOUD-INIT' ${INST_LOG} > /dev/null 2>&1 ;then
+    systemctl stop cloud-init
+    systemctl disable cloud-init
+    apt autoremove --purge -y cloud-init
+    [ -d /etc/cloud ] && rm -rf /etc/cloud
+    [ -d /var/lib/cloud ] && rm -rf /var/lib/cloud
+    rm -rf /var/log/cloud-init*
+    ## log installed tag
+    echo 'RM_CLOUD-INIT' >> ${INST_LOG}
+fi
+
+
+## do not bell on tab-completion
 if ! grep '^NO_BELL' ${INST_LOG} > /dev/null 2>&1 ;then
     if ! grep '# set bell-style none' /etc/inputrc > /dev/null 2>&1 ;then
         sed -i '1i\set bell-style none' /etc/inputrc
@@ -26,6 +57,7 @@ if ! grep '^NO_BELL' ${INST_LOG} > /dev/null 2>&1 ;then
     echo 'NO_BELL' >> ${INST_LOG}
 fi
 
+
 ## bashrc settings
 if ! grep '^SET_BASHRC' ${INST_LOG} > /dev/null 2>&1 ;then
     if ! grep 'Moss bashrc' /etc/bash.bashrc > /dev/null 2>&1 ;then
@@ -36,6 +68,7 @@ if ! grep '^SET_BASHRC' ${INST_LOG} > /dev/null 2>&1 ;then
     echo 'SET_BASHRC' >> ${INST_LOG}
 fi
 
+
 ## vimrc settings
 if ! grep '^SET_VIMRC' ${INST_LOG} > /dev/null 2>&1 ;then
     if ! grep 'Moss vimrc' /etc/vim/vimrc > /dev/null 2>&1 ;then
@@ -44,6 +77,7 @@ if ! grep '^SET_VIMRC' ${INST_LOG} > /dev/null 2>&1 ;then
     ## log installed tag
     echo 'SET_VIMRC' >> ${INST_LOG}
 fi
+
 
 ## disable cron mail
 if ! grep '^CRON_MAIL' ${INST_LOG} > /dev/null 2>&1 ;then
@@ -54,6 +88,7 @@ if ! grep '^CRON_MAIL' ${INST_LOG} > /dev/null 2>&1 ;then
     echo 'CRON_MAIL' >> ${INST_LOG}
 fi
     
+
 ## set root password
 if [ ! -z "${OS_ROOT_PASSWD}" ];then
     if ! grep '^SET_ROOT_PASSWORD' ${INST_LOG} > /dev/null 2>&1 ;then
@@ -63,21 +98,28 @@ if [ ! -z "${OS_ROOT_PASSWD}" ];then
     fi
 fi
 
+
 ## openssh
 if ! grep '^OPENSSH' ${INST_LOG} > /dev/null 2>&1 ;then
     if [ ${SSH_PASS_AUTH} -eq 1 2>/dev/null ]; then
         sed -r -i 's/^#?PasswordAuthentication.*/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+    elif [ ${SSH_PASS_AUTH} -eq 0 2>/dev/null ]; then
+        if [ ! -f ${TOP_DIR}/etc/rsa_public_keys/root.pub ]; then
+            fail_msg "You must put root public key file(root.pub) into ${TOP_DIR}/etc/rsa_public_keys/root.pub"
+        fi
+        sed -r -i 's/^#?PasswordAuthentication.*/PasswordAuthentication no/g' /etc/ssh/sshd_config
     fi
 
     if [ ${SSH_ROOT_LOGIN} -eq 1 2>/dev/null ]; then
         sed -r -i 's/^#?PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config
+    elif [ ${SSH_ROOT_LOGIN} -eq 0 2>/dev/null ]; then
+        sed -r -i 's/^#?PermitRootLogin.*/PermitRootLogin no/g' /etc/ssh/sshd_confi
     fi
-
-    systemctl restart ssh.service
     systemctl restart sshd.service
     ## log installed tag
     echo 'OPENSSH' >> ${INST_LOG}
 fi
+
 
 ## profiles
 if ! grep '^PROFILE' ${INST_LOG} > /dev/null 2>&1 ;then
@@ -88,6 +130,7 @@ if ! grep '^PROFILE' ${INST_LOG} > /dev/null 2>&1 ;then
     ## log installed tag
     echo 'PROFILE' >> ${INST_LOG}
 fi
+
 
 ## sysctl
 if ! grep '^SYSCTL' ${INST_LOG} > /dev/null 2>&1 ;then
@@ -101,23 +144,39 @@ if ! grep '^SYSCTL' ${INST_LOG} > /dev/null 2>&1 ;then
     NEED_REBOOT=1
 fi
 
+
 ## System Handler
 if ! grep '^SYS_HANDLER' ${INST_LOG} > /dev/null 2>&1 ;then
-    cat ${TOP_DIR}/conf/os/limits.conf >> /etc/security/limits.conf
+    if ! grep 'Moss' /etc/security/limits.conf > /dev/null 2>&1 ;then
+        cat ${TOP_DIR}/conf/os/limits.conf >> /etc/security/limits.conf
+    fi
+    sed -r -i 's/^#?DefaultLimitCORE.*/DefaultLimitCORE=100000/g' /etc/systemd/system.conf
+    sed -r -i 's/^#?DefaultLimitNOFILE.*/DefaultLimitNOFILE=100000/g' /etc/systemd/system.conf
     ## log installed tag
     echo 'SYS_HANDLER' >> ${INST_LOG}
     NEED_REBOOT=1
 fi
 
+
 ## Disable IPv6
 if ! grep 'IPv6_OFF' ${INST_LOG} > /dev/null 2>&1 ;then
-    cat ${TOP_DIR}/conf/sysctl/no_ipv6.conf >> /etc/sysctl.conf
-    sysctl -p
-    sysctl --system
+    if [ ${DISABLE_IPV6} -eq 1 2>/dev/null ];then
+        cat ${TOP_DIR}/conf/sysctl/no_ipv6.conf >> /etc/sysctl.conf
+        sysctl -p
+        sysctl --system
+
+        if grep 'GRUB_CMDLINE_LINUX_DEFAULT=""' /etc/default/grub > /dev/null 2>&1 ;then
+            sed -r -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"/g' /etc/default/grub
+        else
+            sed -r -i 's/(^GRUB_CMDLINE_LINUX_DEFAULT=.*)("$)/\1 ipv6.disable=1"/g' /etc/default/grub
+        fi
+        update-grub
+    fi
     ## log installed tag
     echo 'IPv6_OFF' >> ${INST_LOG}
     NEED_REBOOT=1
 fi
+
 
 ## timesyncd
 if ! grep '^TIMESYNCD' ${INST_LOG} > /dev/null 2>&1 ;then
@@ -128,14 +187,15 @@ if ! grep '^TIMESYNCD' ${INST_LOG} > /dev/null 2>&1 ;then
     echo 'TIMESYNCD' >> ${INST_LOG}
 #fi
 
+
 ## nscd
-#if ! grep '^NSCD' ${INST_LOG} > /dev/null 2>&1 ;then
-#    cp -f /etc/nscd.conf /etc/nscd.conf.ori
-#    install -m 0644 ${TOP_DIR}/conf/nscd/nscd.conf /etc/nscd.conf
-#    systemctl restart nscd
-#    ## log installed tag
-#    echo 'NSCD' >> ${INST_LOG}
-#fi
+if ! grep '^RESOLVED' ${INST_LOG} > /dev/null 2>&1 ;then
+    sed -r -i 's/^#?Cache=.*/Cache=no-negative/g' /etc/systemd/resolved.conf
+    systemctl restart systemd-resolved.service
+    ## log installed tag
+    echo 'RESOLVED' >> ${INST_LOG}
+fi
+
 
 ## system service
 if ! grep '^SYS_SERVICE' ${INST_LOG} > /dev/null 2>&1 ;then
@@ -146,6 +206,7 @@ if ! grep '^SYS_SERVICE' ${INST_LOG} > /dev/null 2>&1 ;then
     ## log installed tag
     echo 'SYS_SERVICE' >> ${INST_LOG}
 fi
+
 
 ## enable rc-local service
 if ! grep '^RC-LOCAL' ${INST_LOG} > /dev/null 2>&1 ;then

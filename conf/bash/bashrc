@@ -1,11 +1,12 @@
 
-# Moss bashrc - START
-alias rm='rm -i'
-alias mv='mv -i'
-alias cp='cp -i'
+# Kickstart - START
 alias vi='vim'
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+alias ll='ls -la'
 alias grep='grep --color'
 alias dstat='dstat -cdlmnpsy'
 export PROMPT_COMMAND='RETRN_VAL=$?;logger -p authpriv.debug "$(who -u am i): $(history 1 | sed "s/^[ ]*[0-9]+[ ]*//" ) [$PWD][$RETRN_VAL]"'
-# Moss bashrc - END
+# Kickstart - END
 
