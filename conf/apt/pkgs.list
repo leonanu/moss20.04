@@ -6,6 +6,7 @@ bash-completion
 bzip2
 ca-certificates
 cmake
+dos2unix
 gcc
 iptraf-ng
 libbz2-dev
