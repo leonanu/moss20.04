@@ -37,6 +37,11 @@ readonly OS_ROOT_PASSWD=''
 # Leave blank for current timezone.
 readonly TIMEZONE='Asia/Shangha'
 
+# IPv6
+# 1: Disable IPv6
+# 0: Enable IPv6
+readonly DISABLE_IPV6=0
+
 # Change Ubuntu APT Source List
 # If set to 1, Moss will change default apt source to AliCloud Public Source.
 readonly CHANGE_APT=1
@@ -54,11 +59,6 @@ readonly SSH_ROOT_LOGIN=1
 # INST_DIR is the directory of where compiled software will be installed to.
 # Ngxin, PHP, MySQL etc. softwares will be installed to this directory.
 readonly INST_DIR='/usr/local/app'
-
-# IPv6
-# 1: Disable IPv6
-# 0: Enable IPv6
-readonly DISABLE_IPV6=0
 
 # The primary NIC (WAN) Name.
 # Example: eno111
