@@ -5,7 +5,7 @@
 if ! grep '^SET_HOSTNAME' ${INST_LOG} > /dev/null 2>&1 ;then
     if [ ! -z "${OS_HOSTNAME}" ];then
         OLD_HOSTNAME=$(hostname)
-        hostnamectl set-hostname "${OS_HOSTNAME}"
+        hostnamectl set-hostname "${OS_HOSTNAME}" || fail_msg 'Set Hostname Error!'
         if [ -n "$(grep "$OLD_HOSTNAME" /etc/hosts)" ]; then
             sed -i "s/${OLD_HOSTNAME}//g" /etc/hosts
         fi
