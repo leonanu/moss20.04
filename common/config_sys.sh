@@ -15,6 +15,20 @@ if ! grep '^SET_HOSTNAME' ${INST_LOG} > /dev/null 2>&1 ;then
 fi
 
 
+## set timezone
+if ! grep '^SET_TIMEZONE' ${INST_LOG} > /dev/null 2>&1 ;then
+    if [ ! -z "${TIMEZONE}" ];then
+        timedatectl list-timezones | grep ${TIMEZONE}
+        if [ $? -eq 1 ];then
+            fail_msg 'Timezone name error! Check with <timedatectl list-timezones>'
+        fi
+        timedatectl set-timezone ${TIMEZONE}
+    fi
+    ## log installed tag
+    echo 'SET_TIMEZONE' >> ${INST_LOG}
+fi
+
+
 ## remove snapd
 if ! grep '^RM_SNAP' ${INST_LOG} > /dev/null 2>&1 ;then
     snap remove --purge lxd

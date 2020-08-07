@@ -1,29 +1,17 @@
-#!/bin/bash
+#!/bin/bash               
 
 systemctl stop rsyslog.service
-
-yum clean all
-
-> /var/log/anaconda.ifcfg.log
-> /var/log/anaconda.log
-> /var/log/anaconda.program.log
-> /var/log/anaconda.storage.log
-> /var/log/anaconda.syslog
-> /var/log/anaconda.yum.log
-> /var/log/boot.log
-> /var/log/btmp
-> /var/log/cron
-> /var/log/dmesg
-> /var/log/dracut.log
+apt autoremove --purge -y
+apt autoclean
+apt clean all
+> /var/log/auth.log
+> /var/log/dpkg.log
+> /var/log/faillog.log
 > /var/log/lastlog
-> /var/log/maillog
-> /var/log/message
-> /var/log/secure
-> /var/log/spooler
+> /var/log/syslog
 > /var/log/tallylog
 > /var/log/wtmp
-> /var/log/yum.log
-
-rm -f /var/log/dmesg.old
-
+rm -f /var/log/vmware-*.log
 > /root/.bash_history
+journalctl --vacuum-time=1s
+journalctl --vacuum-size=1M

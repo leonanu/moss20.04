@@ -7,9 +7,9 @@
 ## File Server
 
 # Packages get mode(PGM)
-# local: Moss will get software list and all packages from ./src directory,
-#        list and all packages should be placed in ./src.
-# remote: Moss will get software list and all packages from remote server.
+# local: Moss will get software list and all packages from ../src directory.
+#        Packages list and all packages should be placed in ../src.
+# remote: Moss will get software list and all packages from remote HTTP/HTTPS server.
 readonly PGM='local'
 
 # Remote server URL
@@ -30,6 +30,12 @@ readonly OS_HOSTNAME=''
 # authentication!
 # Leave blank for current root password.
 readonly OS_ROOT_PASSWD=''
+
+# Timezone
+# Set system timezone.
+# To find timezone name, run 'timedatectl list-timezones'.
+# Leave blank for current timezone.
+readonly TIMEZONE='Asia/Shangha'
 
 # Change Ubuntu APT Source List
 # If set to 1, Moss will change default apt source to AliCloud Public Source.

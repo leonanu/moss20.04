@@ -16,12 +16,12 @@ fi
 
 if ! ls ${PKG_PATH} | grep -E '*gz|*.tgz|*.bz2|*.rpm' > /dev/null 2>&1;then
     echo 'No tar bzip2 or RPM packages found!'
-    exit 0
+    exit 1
 fi
 
 if [ ! -x "/usr/bin/md5sum" ]; then
     echo 'md5sum not found! Installing...'
-    yum install -y coreutils || echo 'md5sum install failed!' && exit 1
+    apt install -y coreutils || echo 'md5sum install failed!' && exit 1
 fi
 
 PKG_LIST=$(ls ${PKG_PATH} | grep -E '*gz|*.tgz|*.bz2|*.rpm')

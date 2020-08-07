@@ -52,7 +52,7 @@ source ${TOP_DIR}/common/functions.sh
 
 ## Check Moss20.04 Configuration File
 if [ ! -f "${TOP_DIR}/etc/moss.conf" ];then
-    fail_msg "${TOP_DIR}/etc/moss.conf is not found!"
+    fail_msg "${TOP_DIR}/etc/moss.conf is not found!\nYou may need to copy 'moss.conf.example' to 'moss.conf' and change some settings."
 fi
 
 ## Weclcome
