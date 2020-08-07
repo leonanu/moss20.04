@@ -1,0 +1,17 @@
+network:
+  ethernets:
+    ens160:
+      addresses:
+      - 172.31.31.1/24
+      - 172.31.31.2/24
+      gateway4: 172.31.31.254
+      nameservers:
+        addresses:
+        - 127.0.0.1
+        search:
+        - inanu.net
+    ens192:
+      addresses:
+      - 192.168.100.1/24
+      nameservers: {}
+  version: 2
