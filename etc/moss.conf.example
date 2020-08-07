@@ -35,7 +35,7 @@ readonly OS_ROOT_PASSWD=''
 # Set system timezone.
 # To find timezone name, run 'timedatectl list-timezones'.
 # Leave blank for current timezone.
-readonly TIMEZONE='Asia/Shangha'
+readonly TIMEZONE='Asia/Shanghai'
 
 # IPv6
 # 1: Disable IPv6

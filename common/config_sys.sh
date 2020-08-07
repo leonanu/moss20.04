@@ -22,10 +22,10 @@ if ! grep '^SET_TIMEZONE' ${INST_LOG} > /dev/null 2>&1 ;then
         if [ $? -eq 1 ];then
             fail_msg 'Timezone name error! Check with <timedatectl list-timezones>'
         fi
-        timedatectl set-timezone ${TIMEZONE}
+        timedatectl set-timezone ${TIMEZONE} || fail_msg 'Set Timezone Error!'
+        ## log installed tag                                                    
+        echo 'SET_TIMEZONE' >> ${INST_LOG}
     fi
-    ## log installed tag
-    echo 'SET_TIMEZONE' >> ${INST_LOG}
 fi
 
 
