@@ -2,8 +2,8 @@
 
 systemctl stop rsyslog.service
 apt autoremove --purge -y
-apt autoclean
-apt clean all
+apt-get autoclean
+apt-get clean
 > /var/log/auth.log
 > /var/log/dpkg.log
 > /var/log/faillog.log

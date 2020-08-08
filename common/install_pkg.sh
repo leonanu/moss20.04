@@ -1,10 +1,15 @@
 #!/bin/bash
 
+
+## clean
+apt-get clean
+apt-get autoclean
+
 ## change atp source
 if ! grep '^CH_APT' ${INST_LOG} > /dev/null 2>&1 ;then
     if [ ${CHANGE_APT} -eq 1 2>/dev/null ]; then
         mv /etc/apt/sources.list /etc/apt/sources.list.ori
-        install -m 0644 ${TOP_DIR}/conf/apt/sources.list.aliyun /etc/apt/sources.list
+        install -m 0644 ${TOP_DIR}/conf/apt/sources.list.moss /etc/apt/sources.list
         apt autoclean
         ## log installed tag
         echo 'CH_APT' >> ${INST_LOG}
