@@ -9,9 +9,9 @@ if ! grep '^SET_HOSTNAME' ${INST_LOG} > /dev/null 2>&1 ;then
         if [ -n "$(grep "$OLD_HOSTNAME" /etc/hosts)" ]; then
             sed -i "s/${OLD_HOSTNAME}//g" /etc/hosts
         fi
+        ## log installed tag
+        echo 'SET_HOSTNAME' >> ${INST_LOG}
     fi
-    ## log installed tag
-    echo 'SET_HOSTNAME' >> ${INST_LOG}
 fi
 
 
@@ -104,8 +104,8 @@ fi
     
 
 ## set root password
-if [ ! -z "${OS_ROOT_PASSWD}" ];then
-    if ! grep '^SET_ROOT_PASSWORD' ${INST_LOG} > /dev/null 2>&1 ;then
+if ! grep '^SET_ROOT_PASSWORD' ${INST_LOG} > /dev/null 2>&1 ;then
+    if [ ! -z "${OS_ROOT_PASSWD}" ];then
         echo "root:${OS_ROOT_PASSWD}" | chpasswd
         ## log installed tag
         echo 'SET_ROOT_PASSWORD' >> ${INST_LOG}
@@ -159,6 +159,45 @@ if ! grep '^SYSCTL' ${INST_LOG} > /dev/null 2>&1 ;then
 fi
 
 
+## disable ipv6
+if ! grep 'IPv6_OFF' ${INST_LOG} > /dev/null 2>&1 ;then
+    if [ ${DISABLE_IPV6} -eq 1 2>/dev/null ];then
+        if ! grep 'Moss Disable IPv6' /etc/sysctl.conf > /dev/null 2>&1 ;then
+            cat ${TOP_DIR}/conf/sysctl/no_ipv6.conf >> /etc/sysctl.conf
+            sysctl -p
+            sysctl --system
+
+            if ! grep 'ipv6.disable=1' /etc/default/grub > /dev/null 2>&1 ;then
+                if grep 'GRUB_CMDLINE_LINUX_DEFAULT=""' /etc/default/grub > /dev/null 2>&1 ;then
+                    sed -r -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"/g' /etc/default/grub
+                else
+                    sed -r -i 's/(^GRUB_CMDLINE_LINUX_DEFAULT=.*)("$)/\1 ipv6.disable=1"/g' /etc/default/grub
+                fi
+            fi
+            update-grub
+            ## log installed tag
+            echo 'IPv6_OFF' >> ${INST_LOG}
+            NEED_REBOOT=1
+        fi
+    fi
+fi
+
+
+## enable bbr
+if ! grep 'BBR_ON' ${INST_LOG} > /dev/null 2>&1 ;then
+    if [ ${ENABLE_BBR} -eq 1 2>/dev/null ];then
+        if ! grep 'Moss Enable BBR' /etc/sysctl.conf > /dev/null 2>&1 ;then
+            cat ${TOP_DIR}/conf/sysctl/bbr.conf >> /etc/sysctl.conf
+            sysctl -p
+            sysctl --system
+            ## log installed tag
+            echo 'BBR_ON' >> ${INST_LOG}
+            NEED_REBOOT=1
+        fi
+    fi
+fi
+
+
 ## System Handler
 if ! grep '^SYS_HANDLER' ${INST_LOG} > /dev/null 2>&1 ;then
     if ! grep 'Moss' /etc/security/limits.conf > /dev/null 2>&1 ;then
@@ -168,26 +207,6 @@ if ! grep '^SYS_HANDLER' ${INST_LOG} > /dev/null 2>&1 ;then
     sed -r -i 's/^#?DefaultLimitNOFILE.*/DefaultLimitNOFILE=100000/g' /etc/systemd/system.conf
     ## log installed tag
     echo 'SYS_HANDLER' >> ${INST_LOG}
-    NEED_REBOOT=1
-fi
-
-
-## Disable IPv6
-if ! grep 'IPv6_OFF' ${INST_LOG} > /dev/null 2>&1 ;then
-    if [ ${DISABLE_IPV6} -eq 1 2>/dev/null ];then
-        cat ${TOP_DIR}/conf/sysctl/no_ipv6.conf >> /etc/sysctl.conf
-        sysctl -p
-        sysctl --system
-
-        if grep 'GRUB_CMDLINE_LINUX_DEFAULT=""' /etc/default/grub > /dev/null 2>&1 ;then
-            sed -r -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"/g' /etc/default/grub
-        else
-            sed -r -i 's/(^GRUB_CMDLINE_LINUX_DEFAULT=.*)("$)/\1 ipv6.disable=1"/g' /etc/default/grub
-        fi
-        update-grub
-    fi
-    ## log installed tag
-    echo 'IPv6_OFF' >> ${INST_LOG}
     NEED_REBOOT=1
 fi
 

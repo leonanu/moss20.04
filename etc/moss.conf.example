@@ -42,6 +42,11 @@ readonly TIMEZONE='Asia/Shanghai'
 # 0: Enable IPv6
 readonly DISABLE_IPV6=0
 
+# BBR
+# 1: Enable BBR
+# 0: Disable BBR
+readonly ENABLE_BBR=0
+
 # Change Ubuntu APT Source List
 # If set to 1, Moss will change default apt source to AliCloud Public Source.
 readonly CHANGE_APT=1
