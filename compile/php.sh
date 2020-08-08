@@ -1,4 +1,5 @@
 #!/bin/bash
+## php-7.4.x
 if ! grep '^PHP$' ${INST_LOG} > /dev/null 2>&1 ;then
 
 ## check proc
@@ -7,60 +8,74 @@ if ! grep '^PHP$' ${INST_LOG} > /dev/null 2>&1 ;then
         fail_msg "PHP FactCGI is running on this host!"
     fi
 
+## install pkgs
+    apt install -y \
+    libbz2-dev \
+    libxml2-dev \
+    libldap2-dev \
+    libsasl2-dev \
+    libsqlite3-dev \
+    libsystemd-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    libpng-dev \
+    libwebp-dev \
+    libjpeg-dev \
+    libxpm-dev \
+    libfreetype6-dev \
+    libgmp-dev \
+    libonig-dev \
+    libzip-dev \
+    zlib1g-dev
+
 ## handle source packages
     file_proc ${PHP_SRC}
     get_file
     unpack
 
-## fix ldap libs link
-    PRE_CONFIG='cp -frp /usr/lib64/libldap* /usr/lib/'
-
     CONFIG="./configure \
             --prefix=${INST_DIR}/${SRC_DIR} \
-            --with-config-file-path=${INST_DIR}/${SRC_DIR}/etc \
+            --with-config-file-path=/usr/local/php/etc \
+            --with-bz2 \
             --with-curl \
             --with-mysqli=mysqlnd \
             --with-pdo-mysql=mysqlnd \
-            --with-openssl \
-            --with-zlib \
-            --with-mcrypt \
-            --with-gettext \
-            --with-gd \
-            --with-jpeg-dir \
-            --with-png-dir \
-            --with-gettext \
-            --with-freetype-dir \
-            --with-mhash \
             --with-ldap \
+            --with-ldap-sasl \
+            --with-openssl \
+            --with-zip \
+            --with-zlib \
+            --with-jpeg \
+            --with-webp \
+            --with-xpm \
+            --with-gettext \
+            --with-freetype \
+            --with-mhash \
             --with-gmp \
-            --with-iconv \
             --with-xmlrpc \
-            --with-pcre-regex \
             --with-fpm-systemd \
-            --without-pear \
+            --with-fpm-user=www-data \
+            --with-fpm-group=www-data \
             --enable-mysqlnd \
             --enable-fpm \
+            --enable-gd \
             --enable-gd-jis-conv \
-            --enable-gd-native-ttf \
             --enable-ftp \
-            --enable-zip \
             --enable-bcmath \
+            --enable-calendar \
+            --enable-exif \
             --enable-sockets \
             --enable-calendar \
             --enable-soap \
             --enable-shmop \
+            --enable-mbstring \
+            --enable-sysvmsg \
             --enable-sysvsem \
             --enable-sysvshm \
-            --enable-sysvmsg \
-            --enable-mbstring \
-            --enable-opcache \
-            --disable-ipv6 \
+            --disable-short-tags \
             --disable-cgi \
             --disable-phar \
             --disable-rpath"
-
-## fix ldap lber link
-    POST_CONFIG='sed -i "/^EXTRA_LIBS =.*$/s//& -llber/" ${STORE_DIR}/${SRC_DIR}/Makefile'
 
 ## for compile
     MAKE='make'
@@ -72,24 +87,19 @@ if ! grep '^PHP$' ${INST_LOG} > /dev/null 2>&1 ;then
 
 ## for install config files
         succ_msg "Begin to install ${SRC_DIR} config files"
-        ## user add
-        id www >/dev/null 2>&1 || useradd www -u 1001 -M -s /sbin/nologin -d /www/wwwroot
-        ## www dir
-        [ ! -d "/www/wwwroot" ] && mkdir -m 0755 -p /www/wwwroot
         ## conf
         install -m 0644 ${TOP_DIR}/conf/php/php.ini ${INST_DIR}/${SRC_DIR}/etc/php.ini
         install -m 0644 ${TOP_DIR}/conf/php/php-fpm.conf ${INST_DIR}/${SRC_DIR}/etc/php-fpm.conf
+        install -m 0644 ${TOP_DIR}/conf/php/php-fpm-default.conf ${INST_DIR}/${SRC_DIR}/etc/php-fpm.d/default.conf
         ## log
         [ ! -d "/var/log/php" ] && mkdir -m 0755 -p /var/log/php
         [ ! -d "/usr/local/etc/logrotate" ] && mkdir -m 0755 -p /usr/local/etc/logrotate
-        chown www:www -R /var/log/php
+        chown www-data:www-data -R /var/log/php
         install -m 0644 ${TOP_DIR}/conf/php/php-fpm.logrotate /usr/local/etc/logrotate/php-fpm
         ## cron job
-        echo '' >> /var/spool/cron/root
-        echo '# Logrotate - PHP-FPM' >> /var/spool/cron/root
-        echo '0 0 * * * /usr/sbin/logrotate -f /usr/local/etc/logrotate/php-fpm > /dev/null 2>&1' >> /var/spool/cron/root
-        chown root:root /var/spool/cron/root
-        chmod 600 /var/spool/cron/root
+        echo '' >> /var/spool/cron/crontabs/root
+        echo '# Logrotate - PHP-FPM' >> /var/spool/cron/crontabs/root
+        echo '0 0 * * * /usr/sbin/logrotate -f /usr/local/etc/logrotate/php-fpm > /dev/null 2>&1' >> /var/spool/cron/crontabs/root
         ## opcache
         OPCACHE=$(find ${INST_DIR}/${SRC_DIR}/ -name 'opcache.so')
         mv -f ${OPCACHE} ${INST_DIR}/${SRC_DIR}/ext/ 
