@@ -12,9 +12,9 @@
 
     postrotate
         systemctl restart php-fpm.service
-        chown -R www.www /var/log/php/
+        chown -R www-data.www-data /var/log/php/
 
-        YESTERDAY=$(/bin/date --date '1 days ago' +'%Y%m%d')
+        YESTERDAY=$(date --date '1 days ago' +'%Y%m%d')
         cd /var/log/php
         LOG_FILE=$(ls -1 *.log-* | grep -v .tar.gz)
 
@@ -23,10 +23,10 @@
             LOG_FULL_NAME=${LOG_FILE_NAME}.log-${YESTERDAY}
             mv ${I} ${LOG_FULL_NAME}
 
-            /bin/tar czf ${LOG_FULL_NAME}.tar.gz ${LOG_FULL_NAME}
+            tar czf ${LOG_FULL_NAME}.tar.gz ${LOG_FULL_NAME}
             rm -f ${LOG_FULL_NAME}
         done
 
-        /usr/bin/find /var/log/php -mtime +30 | xargs rm -rf
+        find /var/log/php -mtime +30 | xargs rm -rf
     endscript
 }
