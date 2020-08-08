@@ -87,10 +87,8 @@ if ! grep '^NGINX$' ${INST_LOG} > /dev/null 2>&1 ;then
     chown -R www-data:www-data /var/log/nginx
     ## cron job
     echo '' >> /var/spool/cron/root
-    echo '# Logrotate - Nginx' >> /var/spool/cron/root
-    echo '0 0 * * * /usr/sbin/logrotate -f /usr/local/etc/logrotate/nginx > /dev/null 2>&1' >> /var/spool/cron/root
-    chown root:root /var/spool/cron/root
-    chmod 600 /var/spool/cron/root
+    echo '# Logrotate - Nginx' >> /var/spool/cron/crontabs/root
+    echo '0 0 * * * /usr/sbin/logrotate -f /usr/local/etc/logrotate/nginx > /dev/null 2>&1' >> /var/spool/cron/crontabs/root
     ## install CA
     [ ! -d '/usr/local/bin' ] && mkdir -p /usr/local/bin
     install -m 0755 ${TOP_DIR}/conf/nginx/ca.sh /usr/local/bin/ca.sh
