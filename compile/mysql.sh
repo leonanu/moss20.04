@@ -112,6 +112,22 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     ## remove database 'test'
     #/usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e 'DROP DATABASE test;'
 
+    ## mysql clone backup
+    [ ! -d ${MYSQL_BACKUP_DIR} ] && mkdir -p ${MYSQL_BACKUP_DIR}
+    chown -R mysql:mysql ${MYSQL_BACKUP_DIR}
+    MYSQL_CLONE_PASS=$(pwgen 10 1)
+    echo "\n## MySQL Clone User" >> /root/.my.cnf
+    echo "# Username: mysql_clone" >> /root/.my.cnf
+    echo "# Password: ${MYSQL_CLONE_PASS}" >> /root/.my.cnf
+    /usr/local/mysql/bin/mysql -uroot -p${TMP_PASS} -e "CREATE USER mysql_clone@'localhost' IDENTIFIED by '${MYSQL_CLONE_PASS}';"
+    /usr/local/mysql/bin/mysql -uroot -p${TMP_PASS} -e "GRANT BACKUP_ADMIN ON *.* TO 'mysql_clone'@'localhost';"
+    install -m 0755 ${TOP_DIR}/conf/mysql/mysql_clone.sh /usr/local/bin/mysql_clone.sh
+    sed -i "s#CLONE_PASS=.*#CLONE_PASS=${MYSQL_CLONE_PASS}#" /usr/local/bin/mysql_clone.sh
+    sed -i "s#BACKUP_DIR=.*#BACKUP_DIR=${MYSQL_BACKUP_DIR}#" /usr/local/bin/mysql_clone.sh
+    echo '' >> /var/spool/cron/crontabs/root
+    echo '# MySQL Clone Backup' >> /var/spool/cron/crontabs/root
+    echo '0 4 * * * /usr/local/bin/mysql_clone.sh > /dev/null 2>&1' >> /var/spool/cron/crontabs/root
+
     ## record installed tag
     echo 'MYSQL' >> ${INST_LOG}
 else

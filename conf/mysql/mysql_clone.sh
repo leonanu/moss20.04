@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CLONE_USER='mysql_clone'
-CLONE_PASS='llw4927'
+CLONE_PASS=''
 MY_CNF='/etc/my.cnf'
 
 DATE=$(date +%Y%m%d)

@@ -35,6 +35,7 @@ lrzsz
 make
 net-tools
 pkg-config
+pwgen
 unzip
 zip
 zlib1g-dev
