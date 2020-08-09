@@ -47,7 +47,7 @@ file_proc(){
     FILE_EXT=$(echo $SRC|awk -F. '{print $NF}')
 
     case ${FILE_EXT} in
-        gz|bz2)
+        gz|bz2|xz)
             SRC_DIR=$(basename $SRC ".tar.${FILE_EXT}")
             ;;
         tar|tgz|tbz)
@@ -143,12 +143,15 @@ unpack(){
         bz2|tbz)
             tar jxf ${STORE_DIR}/$SRC -C ${STORE_DIR}
             ;;
+        xz)
+            tar xJf ${STORE_DIR}/$SRC -C ${STORE_DIR}
+            ;;
         rpm)
             # NULL
             ;;
         *)
             warn_msg 'ERROR!'
-            fail_msg "unpack $SRC: Unknown package format!"
+            fail_msg "Unpack $SRC: Unknown package format!"
             ;;
     esac
 }
