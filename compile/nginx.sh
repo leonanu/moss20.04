@@ -71,8 +71,8 @@ if ! grep '^NGINX$' ${INST_LOG} > /dev/null 2>&1 ;then
     ## conf
     install -m 0644 ${TOP_DIR}/conf/nginx/nginx.conf ${INST_DIR}/${SRC_DIR}/conf/nginx.conf
     install -m 0644 ${TOP_DIR}/conf/nginx/vhost.conf ${INST_DIR}/${SRC_DIR}/conf/vhosts/${NGX_HOSTNAME}.conf
-    install -m 0644 ${TOP_DIR}/conf/nginx/stream_http.conf.example ${INST_DIR}/${SRC_DIR}/conf/stream/stream_http.conf.example
-    install -m 0644 ${TOP_DIR}/conf/nginx/stream_https.conf.example ${INST_DIR}/${SRC_DIR}/conf/stream/stream_https.conf.example
+    install -m 0644 ${TOP_DIR}/conf/nginx/stream_http.conf.sample ${INST_DIR}/${SRC_DIR}/conf/stream/stream_http.conf.sample
+    install -m 0644 ${TOP_DIR}/conf/nginx/stream_https.conf.sample ${INST_DIR}/${SRC_DIR}/conf/stream/stream_https.conf.sample
     sed -i "s#.*ng_server_name.*#    server_name  ${NGX_HOSTNAME};#g" ${INST_DIR}/${SRC_DIR}/conf/vhosts/${NGX_HOSTNAME}.conf
     sed -i "s#.*ng_root.*#    root         ${NGX_DOCROOT};#g" ${INST_DIR}/${SRC_DIR}/conf/vhosts/${NGX_HOSTNAME}.conf
     sed -i "s#.*ng_access_log.*#    access_log  ${NGX_LOGDIR}/${NGX_HOSTNAME}_access.log main buffer=4k;#g" ${INST_DIR}/${SRC_DIR}/conf/vhosts/${NGX_HOSTNAME}.conf
