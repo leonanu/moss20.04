@@ -142,7 +142,6 @@ php () {
 ## MySQL
 db () {
     source ${TOP_DIR}/compile/mysql.sh
-    source ${TOP_DIR}/compile/percona-xtrabackup.sh
 }
 
 ## NoSQL

@@ -46,7 +46,7 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     bin/mysqld --initialize --user=mysql
     ## get tmp root password
     PASSWORD_LINE=$(grep 'A temporary password is generated' /var/log/mysql/errors.log)
-    TMP_PASS=$(echo ${PASSWORD_LINE} | cut -d ':' -f 4 | xargs)
+    TMP_PASS=$(echo ${PASSWORD_LINE} | awk -F 'localhost:' '{print $2;}' | xargs)
     bin/mysql_ssl_rsa_setup
     chown mysql:mysql -R $MYSQL_DATA_DIR
 
@@ -116,9 +116,9 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     [ ! -d ${MYSQL_BACKUP_DIR} ] && mkdir -p ${MYSQL_BACKUP_DIR}
     chown -R mysql:mysql ${MYSQL_BACKUP_DIR}
     MYSQL_CLONE_PASS=$(pwgen 10 1)
-    echo "\n## MySQL Clone User" >> /root/.my.cnf
-    echo "# Username: mysql_clone" >> /root/.my.cnf
-    echo "# Password: ${MYSQL_CLONE_PASS}" >> /root/.my.cnf
+    echo -e "\n## MySQL Clone User" >> /root/.my.cnf
+    echo -e "# Username: mysql_clone" >> /root/.my.cnf
+    echo -e "# Password: ${MYSQL_CLONE_PASS}" >> /root/.my.cnf
     /usr/local/mysql/bin/mysql -uroot -p${TMP_PASS} -e "CREATE USER mysql_clone@'localhost' IDENTIFIED by '${MYSQL_CLONE_PASS}';"
     /usr/local/mysql/bin/mysql -uroot -p${TMP_PASS} -e "GRANT BACKUP_ADMIN ON *.* TO 'mysql_clone'@'localhost';"
     install -m 0755 ${TOP_DIR}/conf/mysql/mysql_clone.sh /usr/local/bin/mysql_clone.sh
