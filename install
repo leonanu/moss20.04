@@ -56,7 +56,7 @@ if [ ! -f "${TOP_DIR}/etc/moss.conf" ];then
 fi
 
 ## Weclcome
-clear
+#clear
 cat ${TOP_DIR}/etc/banner
 succ_msg "Welcome to Moss20.04 ${VER}\n"
 succ_msg "Moss20.04 ia a Linux WEB application environment deployment system."
@@ -207,16 +207,16 @@ case "${MOSS_OPT}" in
 esac
 
 if [ ${MOSS_OPT} = 'u' ];then
-    succ_msg '==================================='
+    succ_msg '======================================='
     succ_msg '= Moss20.04 Uninstalled Successfully! ='
-    succ_msg '==================================='
+    succ_msg '======================================='
 else
     warn_msg '*DO NOT* delete Moss20.04 installation directory!'
     warn_msg 'Otherwise, you will not be able to uninstall!'
     warn_msg 'or UPDATE Moss20.04 in the future!'
-    succ_msg '================================='
+    succ_msg '====================================='
     succ_msg '= Moss20.04 Installed Successfully! ='
-    succ_msg '================================='
+    succ_msg '====================================='
 fi
 
 if [ ${NEED_REBOOT} -eq 1 2>/dev/null ];then

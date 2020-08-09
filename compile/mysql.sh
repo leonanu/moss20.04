@@ -1,5 +1,6 @@
 #!/bin/bash
-#### MariaDB 10.1.X
+### MySQL 8.0
+
 if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
 
 ## check proc
@@ -13,46 +14,58 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     get_file
     unpack
 
+    apt install -y libaio1 libtinfo6
+
+    ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6.2 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
+
     SYMLINK='/usr/local/mysql'
-    SERVER_ID=$(ls /etc/sysconfig/network-scripts | grep ifcfg-eno -m 1 | awk -F 'ifcfg-eno' '{print $2}')
 
     mv ${STORE_DIR}/${SRC_DIR} ${INST_DIR}
     ln -sf ${INST_DIR}/${SRC_DIR} $SYMLINK 
-    id mysql >/dev/null 2>&1 || useradd mysql -u 1002 -M -s /sbin/nologin
+    id mysql >/dev/null 2>&1 || useradd mysql -r -M -s /bin/false
     [ ! -d $MYSQL_DATA_DIR ] && mkdir -m 0755 -p $MYSQL_DATA_DIR
+    chown -R mysql:mysql $MYSQL_DATA_DIR
     install -m 0644 ${TOP_DIR}/conf/mysql/my.cnf /etc/my.cnf
-    sed -i "s#server_id.*#server_id=${SERVER_ID}#" /etc/my.cnf
-    sed -i "s#datadir.*#datadir=${MYSQL_DATA_DIR}#" /etc/my.cnf
-    sed -i "s#innodb_data_home_dir.*#innodb_data_home_dir=${MYSQL_DATA_DIR}#" /etc/my.cnf
-    sed -i "s#innodb_log_group_home_dir.*#innodb_log_group_home_dir=${MYSQL_DATA_DIR}#" /etc/my.cnf
+    sed -i "s#datadir.*#datadir = ${MYSQL_DATA_DIR}#" /etc/my.cnf
+    sed -i "s#innodb_data_home_dir.*#innodb_data_home_dir = ${MYSQL_DATA_DIR}#" /etc/my.cnf
+    sed -i "s#innodb_log_group_home_dir.*#innodb_log_group_home_dir = ${MYSQL_DATA_DIR}#" /etc/my.cnf
     chown -R mysql:mysql ${INST_DIR}/${SRC_DIR}
+
+    ## log                         
+    [ ! -d /var/log/mysql ] && mkdir -m 0755 -p /var/log/mysql
+    [ ! -d /usr/local/etc/logrotate ] && mkdir -m 0755 -p /usr/local/etc/logrotate
+    chown mysql:mysql -R /var/log/mysql
+
+    ## check sector file
+    MYSQL_DATA_TOPDIR="/$(echo ${MYSQL_DATA_DIR} | cut -d '/' -f 2)"
+    touch ${MYSQL_DATA_TOPDIR}/check_sector_size
+    chown mysql:mysql ${MYSQL_DATA_TOPDIR}/check_sector_size
+
+    ## initial mysql
     cd $SYMLINK
-    ./scripts/mysql_install_db --user=mysql --defaults-file=/etc/my.cnf --force --skip-name-resolve
-    sleep 1
+    bin/mysqld --initialize --user=mysql
+    ## get tmp root password
+    PASSWORD_LINE=$(grep 'A temporary password is generated' /var/log/mysql/errors.log)
+    TMP_PASS=$(echo ${PASSWORD_LINE} | cut -d ':' -f 4 | xargs)
+    bin/mysql_ssl_rsa_setup
     chown mysql:mysql -R $MYSQL_DATA_DIR
 
 ## for install config files
     succ_msg "Begin to install ${SRC_DIR} config files"
-
-    ## log
-    [ ! -d /var/local/mysql ] && mkdir -m 0755 -p /var/log/mysql
-    [ ! -d /usr/local/etc/logrotate ] && mkdir -m 0755 -p /usr/local/etc/logrotate
-    chown mysql:mysql -R /var/log/mysql
+    ## log rotate
     install -m 0644 ${TOP_DIR}/conf/mysql/mysql.logrotate /usr/local/etc/logrotate/mysql
+    sed -i "s#ROOT_PASS=.*#ROOT_PASS="${TMP_PASS}"#" /usr/local/etc/logrotate/mysql
 
     ## cron job
-    echo '' >> /var/spool/cron/root
-    echo '# Logrotate - MySQL' >> /var/spool/cron/root
-    echo '0 0 * * * /usr/sbin/logrotate -f /usr/local/etc/logrotate/mysql > /dev/null 2>&1' >> /var/spool/cron/root
-    chown root:root /var/spool/cron/root
-    chmod 600 /var/spool/cron/root
+    echo '' >> /var/spool/cron/crontabs/root
+    echo '# Logrotate - MySQL' >> /var/spool/cron/crontabs/root
+    echo '0 0 * * * /usr/sbin/logrotate -f /usr/local/etc/logrotate/mysql > /dev/null 2>&1' >> /var/spool/cron/crontabs/root
 
     ## init scripts
     install -m 0755 ${SYMLINK}/support-files/mysql.server /etc/init.d/mysqld
-    chkconfig --add mysqld
-    chkconfig --level 35 mysqld on
-    ## start
-    service mysqld start
+    chmod 755 /etc/init.d/mysqld
+    systemctl enable mysqld
+    systemctl start mysqld
     sleep 3
 
 ## check proc
@@ -74,35 +87,30 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     #    fi
     #done
 
-    MYSQL_ROOT_PASS=$(mkpasswd -s 0 -l 12)
-    MYSQL_MULADMIN_PASS=$(mkpasswd -s 0 -l 12)
-    /usr/local/mysql/bin/mysqladmin -uroot password "${MYSQL_ROOT_PASS}"
-    /usr/local/mysql/bin/mysqladmin -h127.0.0.1 -uroot password "${MYSQL_ROOT_PASS}" 
+    #MYSQL_ROOT_PASS=$(mkpasswd -s 0 -l 12)
+    #/usr/local/mysql/bin/mysqladmin -uroot password "${MYSQL_ROOT_PASS}"
+    #/usr/local/mysql/bin/mysqladmin -h127.0.0.1 -uroot password "${MYSQL_ROOT_PASS}" 
 
     ## /root/.my.cnf
     echo '[client]' > /root/.my.cnf
     echo 'user = root' >> /root/.my.cnf
-    echo "password = ${MYSQL_ROOT_PASS}" >> /root/.my.cnf
-    echo '' >> /root/.my.cnf
-    echo '[mysqladmin]' >> /root/.my.cnf
-    echo "user = ${MYSQL_MULADMIN_USER}" >> /root/.my.cnf
-    echo "password = ${MYSQL_MULADMIN_PASS}" >> /root/.my.cnf
+    echo "password = ${TMP_PASS}" >> /root/.my.cnf
     chmod 600 /root/.my.cnf
-    succ_msg "MySQL root password has been changed!"
-    warn_msg "Please protect the Moss config file CARFULLY!"
-    read -p 'Press any key to continue.'
+    #succ_msg "MySQL root password has been changed!"
+    #warn_msg "Please protect the Moss config file CARFULLY!"
+    #read -p 'Press any key to continue.'
 
     ## remove null username & password accounts
-    /usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e 'USE mysql; DELETE FROM user WHERE password=""; FLUSH PRIVILEGES;'
+    #/usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e 'USE mysql; DELETE FROM user WHERE password=""; FLUSH PRIVILEGES;'
 
     ## create mysqladmin user account
-    /usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e "GRANT SHUTDOWN ON *.* TO '${MYSQL_MULADMIN_USER}'@'localhost' IDENTIFIED BY '${MYSQL_MULADMIN_PASS}'; FLUSH PRIVILEGES;"
-    /usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e "GRANT SHUTDOWN ON *.* TO '${MYSQL_MULADMIN_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_MULADMIN_PASS}'; FLUSH PRIVILEGES;"
-    /usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e "GRANT RELOAD ON *.* TO '${MYSQL_MULADMIN_USER}'@'localhost' IDENTIFIED BY '${MYSQL_MULADMIN_PASS}'; FLUSH PRIVILEGES;"
-    /usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e "GRANT RELOAD ON *.* TO '${MYSQL_MULADMIN_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_MULADMIN_PASS}'; FLUSH PRIVILEGES;"
+    #/usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e "GRANT SHUTDOWN ON *.* TO '${MYSQL_MULADMIN_USER}'@'localhost' IDENTIFIED BY '${MYSQL_MULADMIN_PASS}'; FLUSH PRIVILEGES;"
+    #/usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e "GRANT SHUTDOWN ON *.* TO '${MYSQL_MULADMIN_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_MULADMIN_PASS}'; FLUSH PRIVILEGES;"
+    #/usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e "GRANT RELOAD ON *.* TO '${MYSQL_MULADMIN_USER}'@'localhost' IDENTIFIED BY '${MYSQL_MULADMIN_PASS}'; FLUSH PRIVILEGES;"
+    #/usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e "GRANT RELOAD ON *.* TO '${MYSQL_MULADMIN_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_MULADMIN_PASS}'; FLUSH PRIVILEGES;"
 
     ## remove database 'test'
-    /usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e 'DROP DATABASE test;'
+    #/usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} -e 'DROP DATABASE test;'
 
     ## record installed tag
     echo 'MYSQL' >> ${INST_LOG}

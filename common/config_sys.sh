@@ -9,6 +9,8 @@ if ! grep '^SET_HOSTNAME' ${INST_LOG} > /dev/null 2>&1 ;then
         if [ -n "$(grep "$OLD_HOSTNAME" /etc/hosts)" ]; then
             sed -i "s/${OLD_HOSTNAME}//g" /etc/hosts
         fi
+        sed -i "s/127\.0\.0\.1.*/127.0.0.1    ${OS_HOSTNAME} localhost/" /etc/hosts
+        sed -i "s/127\.0\.1\.1.*/127.0.1.1    ${OS_HOSTNAME}.domain localhost.domain/" /etc/hosts
         ## log installed tag
         echo 'SET_HOSTNAME' >> ${INST_LOG}
     fi
@@ -238,15 +240,4 @@ if ! grep '^SYS_SERVICE' ${INST_LOG} > /dev/null 2>&1 ;then
     done
     ## log installed tag
     echo 'SYS_SERVICE' >> ${INST_LOG}
-fi
-
-
-## enable rc-local service
-if ! grep '^RC-LOCAL' ${INST_LOG} > /dev/null 2>&1 ;then
-    touch /etc/rc.local
-    chmod +x /etc/rc.local
-    systemctl enable rc-local.service
-    systemctl start rc-local.service
-    ## log installed tag
-    echo 'RC-LOCAL' >> ${INST_LOG}
 fi

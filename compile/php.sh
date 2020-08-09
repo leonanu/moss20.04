@@ -109,7 +109,6 @@ if ! grep '^PHP$' ${INST_LOG} > /dev/null 2>&1 ;then
         install -m 0644 ${TOP_DIR}/conf/php/php-fpm.service /usr/lib/systemd/system/php-fpm.service
         systemctl daemon-reload
         systemctl enable php-fpm.service
-        ## start
         systemctl start php-fpm.service
         sleep 3
 

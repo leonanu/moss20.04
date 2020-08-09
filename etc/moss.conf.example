@@ -78,13 +78,8 @@ readonly NIC_LAN='eno222'
 # MySQL database directory.
 readonly MYSQL_DATA_DIR='/data/mysql'
 
-# Multi-MySQL admin user
-readonly MYSQL_MULADMIN_USER='multi_admin'
-
-
-## Percona Xtrabackup Settings
 # MySQL data backup path
-readonly XTRABACKUP_BACKUP_DIR='/data/backup/mysql'
+readonly MYSQL_BACKUP_DIR='/data/backup/mysql'
 
 
 ## Redis Settings
@@ -104,7 +99,6 @@ readonly NGX_HOSTNAME='www.foo.com'
 readonly NGX_DOCROOT="/data/wwwroot/${NGX_HOSTNAME}"
 
 # Ngxin log directory. The path of Nginx access log and error log store to.
-# Default is '/www/logs/www.example.com'
 readonly NGX_LOGDIR="/var/log/nginx"
 
 
