@@ -93,8 +93,7 @@ RDS_LOGDIR='/var/log/redis'
 ## Nginx Settings
 # Nginx webserver host name.
 # ONLY one domain name can be set!
-# If leave blank, accepts any domain or IP.
-NGX_HOSTNAME=''
+NGX_HOSTNAME='www.foo.com'
 
 # Nginx webserver documnet root. Default is '/www/wwwroot/www.example.com'.
 NGX_DOCROOT="/data/wwwroot/${NGX_HOSTNAME}"
