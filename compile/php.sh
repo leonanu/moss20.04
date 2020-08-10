@@ -10,7 +10,7 @@ if ! grep '^PHP$' ${INST_LOG} > /dev/null 2>&1 ;then
 
 ## check settings
     [ -z ${ISREDIS} ] && ISREDIS=0
-    [ -z ${HP_LOGDIR} ] && PHP_LOGDIR='/var/log/php'
+    [ -z ${PHP_LOGDIR} ] && PHP_LOGDIR='/var/log/php'
 
 ## install pkgs
     apt install -y \
