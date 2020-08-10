@@ -1,5 +1,5 @@
 #!/bin/bash
-
+ 
 # This script use to genrate package MD5 value fit for Moss packages.info
 # Usage: package_md5.sh /packages/path
 
@@ -14,7 +14,7 @@ if [ ! -d ${PKG_PATH} ];then
     exit 1
 fi
 
-if ! ls ${PKG_PATH} | grep -E '*gz|*.tgz|*.bz2|*.rpm' > /dev/null 2>&1;then
+if ! ls ${PKG_PATH} | grep -E '*gz|*.tgz|*.bz2|*.xz|*.rpm' > /dev/null 2>&1;then
     echo 'No tar bzip2 or RPM packages found!'
     exit 1
 fi
@@ -24,7 +24,7 @@ if [ ! -x "/usr/bin/md5sum" ]; then
     apt install -y coreutils || echo 'md5sum install failed!' && exit 1
 fi
 
-PKG_LIST=$(ls ${PKG_PATH} | grep -E '*gz|*.tgz|*.bz2|*.rpm')
+PKG_LIST=$(ls ${PKG_PATH} | grep -E '*gz|*.tgz|*.bz2|*.xz|*.rpm')
 
 for PKG in ${PKG_LIST}
 do
