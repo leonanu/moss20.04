@@ -9,7 +9,7 @@ if ! grep '^NGINX$' ${INST_LOG} > /dev/null 2>&1 ;then
     fi
 
 ## check settings
-    [ -z ${NGX_HOSTNAME} ] && NGX_HOSTNAME='www.foo.com'
+    [ -z ${NGX_HOSTNAME} ] && NGX_HOSTNAME='_'
     [ -z ${NGX_DOCROOT} ] && NGX_DOCROOT="/data/wwwroot/${NGX_HOSTNAME}"
     [ -z ${NGX_LOGDIR} ] && NGX_LOGDIR='/var/log/nginx'
 
