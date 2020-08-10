@@ -9,6 +9,11 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
         fail_msg "MySQL is running on this host!"
     fi
 
+## check settings
+    [ -z ${MYSQL_DATA_DIR} ] && MYSQL_DATA_DIR='/data/mysql'
+    [ -z ${MYSQL_BACKUP_DIR} ] && MYSQL_BACKUP_DIR='/data/backup/mysql'
+    [ -z ${MYSQL_LOGDIR} ] && MYSQL_LOGDIR='/var/log/mysql'
+
 ## handle source packages
     file_proc ${MYSQL_SRC}
     get_file
@@ -26,15 +31,16 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     [ ! -d $MYSQL_DATA_DIR ] && mkdir -m 0755 -p $MYSQL_DATA_DIR
     chown -R mysql:mysql $MYSQL_DATA_DIR
     install -m 0644 ${TOP_DIR}/conf/mysql/my.cnf /etc/my.cnf
-    sed -i "s#datadir.*#datadir = ${MYSQL_DATA_DIR}#" /etc/my.cnf
-    sed -i "s#innodb_data_home_dir.*#innodb_data_home_dir = ${MYSQL_DATA_DIR}#" /etc/my.cnf
-    sed -i "s#innodb_log_group_home_dir.*#innodb_log_group_home_dir = ${MYSQL_DATA_DIR}#" /etc/my.cnf
+    sed -i "s#datadir.*#datadir      = ${MYSQL_DATA_DIR}#" /etc/my.cnf
+    sed -i "s#innodb_data_home_dir.*#innodb_data_home_dir           = ${MYSQL_DATA_DIR}#" /etc/my.cnf
+    sed -i "s#innodb_log_group_home_dir.*#innodb_log_group_home_dir      = ${MYSQL_DATA_DIR}#" /etc/my.cnf
+    sed -i "s#/var/log/mysql#${MYSQL_LOGDIR}#g" /etc/my.cnf
     chown -R mysql:mysql ${INST_DIR}/${SRC_DIR}
 
-    ## log                         
-    [ ! -d /var/log/mysql ] && mkdir -m 0755 -p /var/log/mysql
+    ## log
+    [ ! -d ${MYSQL_LOGDIR} ] && mkdir -m 0755 -p ${MYSQL_LOGDIR}
     [ ! -d /usr/local/etc/logrotate ] && mkdir -m 0755 -p /usr/local/etc/logrotate
-    chown mysql:mysql -R /var/log/mysql
+    chown mysql:mysql -R ${MYSQL_LOGDIR}
 
     ## check sector file
     MYSQL_DATA_TOPDIR="/$(echo ${MYSQL_DATA_DIR} | cut -d '/' -f 2)"
@@ -45,7 +51,7 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     cd $SYMLINK
     bin/mysqld --initialize --user=mysql
     ## get tmp root password
-    PASSWORD_LINE=$(grep 'A temporary password is generated' /var/log/mysql/errors.log)
+    PASSWORD_LINE=$(grep 'A temporary password is generated' ${MYSQL_LOGDIR}/errors.log)
     TMP_PASS=$(echo ${PASSWORD_LINE} | awk -F 'localhost:' '{print $2;}' | xargs)
     bin/mysql_ssl_rsa_setup
     chown mysql:mysql -R $MYSQL_DATA_DIR
@@ -55,6 +61,7 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     ## log rotate
     install -m 0644 ${TOP_DIR}/conf/mysql/mysql.logrotate /usr/local/etc/logrotate/mysql
     sed -i "s#ROOT_PASS=.*#ROOT_PASS="${TMP_PASS}"#" /usr/local/etc/logrotate/mysql
+    sed -i "s#/var/log/mysql#${MYSQL_LOGDIR}#g" /usr/local/etc/logrotate/mysql
 
     ## cron job
     echo '' >> /var/spool/cron/crontabs/root

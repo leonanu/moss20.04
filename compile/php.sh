@@ -8,6 +8,10 @@ if ! grep '^PHP$' ${INST_LOG} > /dev/null 2>&1 ;then
         fail_msg "PHP FactCGI is running on this host!"
     fi
 
+## check settings
+    [ -z ${ISREDIS} ] && ISREDIS=0
+    [ -z ${HP_LOGDIR} ] && PHP_LOGDIR='/var/log/php'
+
 ## install pkgs
     apt install -y \
     libbz2-dev \
@@ -91,11 +95,15 @@ if ! grep '^PHP$' ${INST_LOG} > /dev/null 2>&1 ;then
         install -m 0644 ${TOP_DIR}/conf/php/php.ini ${INST_DIR}/${SRC_DIR}/etc/php.ini
         install -m 0644 ${TOP_DIR}/conf/php/php-fpm.conf ${INST_DIR}/${SRC_DIR}/etc/php-fpm.conf
         install -m 0644 ${TOP_DIR}/conf/php/php-fpm-default.conf ${INST_DIR}/${SRC_DIR}/etc/php-fpm.d/default.conf
+        sed -i "s#/var/log/php#${PHP_LOGDIR}#g" ${INST_DIR}/${SRC_DIR}/etc/php.ini
+        sed -i "s#/var/log/php#${PHP_LOGDIR}#g" ${INST_DIR}/${SRC_DIR}/etc/php-fpm.conf
+        sed -i "s#/var/log/php#${PHP_LOGDIR}#g" ${INST_DIR}/${SRC_DIR}/etc/php-fpm.d/default.conf
         ## log
-        [ ! -d "/var/log/php" ] && mkdir -m 0755 -p /var/log/php
+        [ ! -d "${PHP_LOGDIR}" ] && mkdir -m 0755 -p ${PHP_LOGDIR}
         [ ! -d "/usr/local/etc/logrotate" ] && mkdir -m 0755 -p /usr/local/etc/logrotate
-        chown www-data:www-data -R /var/log/php
+        chown www-data:www-data -R ${PHP_LOGDIR}
         install -m 0644 ${TOP_DIR}/conf/php/php-fpm.logrotate /usr/local/etc/logrotate/php-fpm
+        sed -i "s#/var/log/php#${PHP_LOGDIR}#g" /usr/local/etc/logrotate/php-fpm
         ## cron job
         echo '' >> /var/spool/cron/crontabs/root
         echo '# Logrotate - PHP-FPM' >> /var/spool/cron/crontabs/root

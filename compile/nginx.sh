@@ -8,6 +8,11 @@ if ! grep '^NGINX$' ${INST_LOG} > /dev/null 2>&1 ;then
         fail_msg "There already have Nginx running!"
     fi
 
+## check settings
+    [ -z ${NGX_HOSTNAME} ] && NGX_HOSTNAME='www.foo.com'
+    [ -z ${NGX_DOCROOT} ] && NGX_DOCROOT="/data/wwwroot/${NGX_HOSTNAME}"
+    [ -z ${NGX_LOGDIR} ] && NGX_LOGDIR='/var/log/nginx'
+
 ## nginx 
     file_proc ${NGINX_SRC}
     get_file

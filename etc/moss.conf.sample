@@ -65,14 +65,6 @@ readonly SSH_ROOT_LOGIN=1
 # Ngxin, PHP, MySQL etc. softwares will be installed to this directory.
 readonly INST_DIR='/usr/local/app'
 
-# The primary NIC (WAN) Name.
-# Example: eno111
-readonly NIC_WAN='eno111'
-
-# The secondary NIC (LAN) Name.
-# Example: eno222
-readonly NIC_LAN='eno222'
-
 
 ## MySQL Settings
 # MySQL database directory.
@@ -81,13 +73,17 @@ readonly MYSQL_DATA_DIR='/data/mysql'
 # MySQL data backup path
 readonly MYSQL_BACKUP_DIR='/data/backup/mysql'
 
+# MySQL log directory.
+readonly MYSQL_LOGDIR='/var/log/mysql'
+
 
 ## Redis Settings
 # Redis persistence data directory.
 readonly RDS_DATA_DIR='/data/redis'
 
-# Redis master server IP address.
-readonly RDS_MASTER_IP='192.168.0.1'
+# Redis log directory.
+readonly RDS_LOGDIR='/var/log/redis'
+
 
 
 ## Nginx Settings
@@ -99,12 +95,15 @@ readonly NGX_HOSTNAME='www.foo.com'
 readonly NGX_DOCROOT="/data/wwwroot/${NGX_HOSTNAME}"
 
 # Ngxin log directory. The path of Nginx access log and error log store to.
-readonly NGX_LOGDIR="/var/log/nginx"
+readonly NGX_LOGDIR='/var/log/nginx'
 
 
 ## PHP Settings
 # Install PECL Redis extension
 readonly ISREDIS=1
+
+# PHP log directory.
+readonly PHP_LOGDIR='/var/log/php'
 
 
 ## Zabbix Agent Settings
