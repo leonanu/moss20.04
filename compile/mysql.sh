@@ -10,6 +10,7 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     fi
 
 ## check settings
+    [ -z ${MYSQL_ROOT_PASS} ] && MYSQL_ROOT_PASS=$(pwgen 12 1)
     [ -z ${MYSQL_DATA_DIR} ] && MYSQL_DATA_DIR='/data/mysql'
     [ -z ${MYSQL_BACKUP_DIR} ] && MYSQL_BACKUP_DIR='/data/backup/mysql'
     [ -z ${MYSQL_LOGDIR} ] && MYSQL_LOGDIR='/var/log/mysql'
@@ -56,11 +57,21 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     bin/mysql_ssl_rsa_setup
     chown mysql:mysql -R $MYSQL_DATA_DIR
 
+    ## set root password
+    /usr/local/mysql/bin/mysql -uroot -p${TMP_PASS} --connect-expired-password \
+    -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASS}';"
+
+    ## /root/.my.cnf
+    echo '[client]' > /root/.my.cnf
+    echo 'user = root' >> /root/.my.cnf
+    echo "password = '${MYSQL_ROOT_PASS}'" >> /root/.my.cnf
+    chmod 600 /root/.my.cnf
+
 ## for install config files
     succ_msg "Begin to install ${SRC_DIR} config files"
     ## log rotate
     install -m 0644 ${TOP_DIR}/conf/mysql/mysql.logrotate /usr/local/etc/logrotate/mysql
-    sed -i "s#ROOT_PASS=.*#ROOT_PASS="${TMP_PASS}"#" /usr/local/etc/logrotate/mysql
+    sed -i "s#ROOT_PASS=.*#ROOT_PASS='${MYSQL_ROOT_PASS}'#" /usr/local/etc/logrotate/mysql
     sed -i "s#/var/log/mysql#${MYSQL_LOGDIR}#g" /usr/local/etc/logrotate/mysql
 
     ## cron job
@@ -98,11 +109,6 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     #/usr/local/mysql/bin/mysqladmin -uroot password "${MYSQL_ROOT_PASS}"
     #/usr/local/mysql/bin/mysqladmin -h127.0.0.1 -uroot password "${MYSQL_ROOT_PASS}" 
 
-    ## /root/.my.cnf
-    echo '[client]' > /root/.my.cnf
-    echo 'user = root' >> /root/.my.cnf
-    echo "password = ${TMP_PASS}" >> /root/.my.cnf
-    chmod 600 /root/.my.cnf
     #succ_msg "MySQL root password has been changed!"
     #warn_msg "Please protect the Moss config file CARFULLY!"
     #read -p 'Press any key to continue.'
@@ -126,8 +132,8 @@ if ! grep '^MYSQL$' ${INST_LOG} > /dev/null 2>&1 ; then
     echo -e "\n## MySQL Clone User" >> /root/.my.cnf
     echo -e "# Username: mysql_clone" >> /root/.my.cnf
     echo -e "# Password: ${MYSQL_CLONE_PASS}" >> /root/.my.cnf
-    /usr/local/mysql/bin/mysql -uroot -p${TMP_PASS} -e "CREATE USER mysql_clone@'localhost' IDENTIFIED by '${MYSQL_CLONE_PASS}';"
-    /usr/local/mysql/bin/mysql -uroot -p${TMP_PASS} -e "GRANT BACKUP_ADMIN ON *.* TO 'mysql_clone'@'localhost';"
+    /usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROOT_PASS} --connect-expired-password -e "CREATE USER mysql_clone@'localhost' IDENTIFIED by '${MYSQL_CLONE_PASS}';"
+    /usr/local/mysql/bin/mysql -uroot -p${MYSQL_ROO_PASS} --connect-expired-password -e "GRANT BACKUP_ADMIN ON *.* TO 'mysql_clone'@'localhost';"
     install -m 0755 ${TOP_DIR}/conf/mysql/mysql_clone.sh /usr/local/bin/mysql_clone.sh
     sed -i "s#CLONE_PASS=.*#CLONE_PASS=${MYSQL_CLONE_PASS}#" /usr/local/bin/mysql_clone.sh
     sed -i "s#BACKUP_DIR=.*#BACKUP_DIR=${MYSQL_BACKUP_DIR}#" /usr/local/bin/mysql_clone.sh

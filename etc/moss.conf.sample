@@ -67,6 +67,10 @@ INST_DIR='/usr/local/app'
 
 
 ## MySQL Settings
+# MySQL root password.
+# If leave blank, Moss will set a random password and save to /root/.my.cnf
+MYSQL_ROOT_PASS=''
+
 # MySQL database directory.
 MYSQL_DATA_DIR='/data/mysql'
 
