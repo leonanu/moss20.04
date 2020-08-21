@@ -129,7 +129,7 @@ if ! grep '^OPENSSH' ${INST_LOG} > /dev/null 2>&1 ;then
     if [ ${SSH_ROOT_LOGIN} -eq 1 2>/dev/null ]; then
         sed -r -i 's/^#?PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config
     elif [ ${SSH_ROOT_LOGIN} -eq 0 2>/dev/null ]; then
-        sed -r -i 's/^#?PermitRootLogin.*/PermitRootLogin no/g' /etc/ssh/sshd_confi
+        sed -r -i 's/^#?PermitRootLogin.*/PermitRootLogin no/g' /etc/ssh/sshd_config
     fi
     systemctl restart sshd.service
     ## log installed tag
